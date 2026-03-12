@@ -1,22 +1,18 @@
 import asyncio
-
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from config import BOT_TOKEN
 from database import Base, engine, SessionLocal, add_university, get_university_by_admin
-
 from models import Student
 
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
 bot = Bot(token=BOT_TOKEN)
-
 dp = Dispatcher()
 
 Base.metadata.create_all(engine)
 
-
+# MENYULAR
 start_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🎓 Talaba")],
@@ -24,7 +20,6 @@ start_menu = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
-
 
 student_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -36,7 +31,6 @@ student_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-
 admin_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🏫 Universitet qo'shish")],
@@ -46,81 +40,61 @@ admin_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-
 waiting_jshshir = set()
-
 waiting_university = {}
 
-
+# START
 @dp.message(CommandStart())
 async def start(message: types.Message):
-
     await message.answer(
         "Assalomu alaykum!\nKim sifatida kirasiz?",
         reply_markup=start_menu
     )
 
-
+# TALABA
 @dp.message(lambda m: m.text == "🎓 Talaba")
 async def student_start(message: types.Message):
-
     waiting_jshshir.add(message.from_user.id)
-
     await message.answer("JSHSHIR raqamingizni kiriting")
 
-
+# ADMIN
 @dp.message(lambda m: m.text == "👨‍💼 Admin")
 async def admin_start(message: types.Message):
 
     university = get_university_by_admin(message.from_user.id)
 
     if university:
-
         await message.answer(
             "Admin panelga xush kelibsiz",
             reply_markup=admin_menu
         )
-
     else:
+        waiting_university[message.from_user.id] = {"step": "name"}
+        await message.answer("Universitet nomini kiriting")
 
-        await message.answer(
-            "Siz admin emassiz.\nUniversitet qo'shishingiz mumkin."
-        )
-
-
-@dp.message(lambda m: m.text == "🏫 Universitet qo'shish")
-async def add_university_start(message: types.Message):
-
-    waiting_university[message.from_user.id] = {"step": "name"}
-
-    await message.answer("Universitet nomini kiriting")
-
-
+# UNIVERSITET QO‘SHISH
 @dp.message()
 async def university_steps(message: types.Message):
 
     uid = message.from_user.id
 
+    # universitet qo‘shish jarayoni
     if uid in waiting_university:
 
         data = waiting_university[uid]
 
         if data["step"] == "name":
-
             data["name"] = message.text
             data["step"] = "api"
 
             await message.answer("API URL kiriting")
-
             return
 
         elif data["step"] == "api":
-
             data["api"] = message.text
             data["step"] = "token"
 
             await message.answer("API TOKEN kiriting")
-
             return
 
         elif data["step"] == "token":
@@ -141,7 +115,7 @@ async def university_steps(message: types.Message):
 
             return
 
-
+    # TALABA JSHSHIR
     if message.from_user.id not in waiting_jshshir:
         return
 
@@ -169,12 +143,9 @@ async def university_steps(message: types.Message):
 
 
 async def main():
-
     print("Bot ishga tushdi")
-
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
