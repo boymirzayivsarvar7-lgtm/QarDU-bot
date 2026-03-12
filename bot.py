@@ -1,161 +1,66 @@
 import asyncio
+import os
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from config import BOT_TOKEN
+from aiohttp import web
+
+from config import BOT_TOKEN, ADMINS
 from database import Base, engine, SessionLocal
 from models import Student
-from settings import is_admin, add_admin, create_university
-
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 Base.metadata.create_all(engine)
 
-waiting_university = {}
 waiting_jshshir = set()
 
+# ===== MENYU =====
 
-# =========================
-# TALABA MENYU
-# =========================
 student_menu = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="📊 Qarzdorligim")],
-        [KeyboardButton(text="👤 Men haqimda")],
-        [KeyboardButton(text="ℹ️ Ma'lumot"), KeyboardButton(text="☎️ Aloqa")]
+        [KeyboardButton(text="💰 Kontrakt qarzi")],
+        [KeyboardButton(text="📚 Kredit qarzi")],
+        [KeyboardButton(text="📖 Kutubxona qarzi")],
+        [KeyboardButton(text="🏠 Yotoqxona qarzi")],
+        [KeyboardButton(text="👤 Men haqimda")]
     ],
     resize_keyboard=True
 )
 
-
-# =========================
-# ADMIN MENYU
-# =========================
 admin_menu = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🏫 Universitet qo'shish")],
-        [KeyboardButton(text="📊 Statistika")]
+        [KeyboardButton(text="📢 Xabar yuborish")],
+        [KeyboardButton(text="📊 Statistika")],
     ],
     resize_keyboard=True
 )
 
 
-# =========================
-# START
-# =========================
+# ===== START =====
+
 @dp.message(CommandStart())
 async def start(message: types.Message):
+
+    if message.from_user.id in ADMINS:
+        await message.answer("Admin panelga xush kelibsiz", reply_markup=admin_menu)
+        return
 
     waiting_jshshir.add(message.from_user.id)
 
     await message.answer(
         "Assalomu alaykum!\n\n"
-        "JSHSHIR raqamingizni kiriting"
+        "JSHSHIR raqamingizni kiriting:"
     )
 
 
-# =========================
-# ADMIN PANEL
-# =========================
-@dp.message(Command("admin"))
-async def admin_panel(message: types.Message):
+# ===== JSHSHIR KIRITISH =====
 
-    if not is_admin(message.from_user.id):
-
-        await message.answer(
-            "Siz admin emassiz.\n"
-            "Agar universitet admini bo‘lsangiz "
-            "avval universitet qo‘shing."
-        )
-
-        keyboard = ReplyKeyboardMarkup(
-            keyboard=[
-                [KeyboardButton(text="🏫 Universitet qo'shish")]
-            ],
-            resize_keyboard=True
-        )
-
-        await message.answer("Universitet qo'shish:", reply_markup=keyboard)
-
-        return
-
-    await message.answer(
-        "Admin panel",
-        reply_markup=admin_menu
-    )
-
-
-# =========================
-# UNIVERSITET QO‘SHISH BOSHLASH
-# =========================
-@dp.message(lambda m: m.text == "🏫 Universitet qo'shish")
-async def add_university_start(message: types.Message):
-
-    waiting_university[message.from_user.id] = {"step": "name"}
-
-    await message.answer("Universitet nomini kiriting")
-
-
-# =========================
-# UNIVERSITET MA'LUMOTLARI
-# =========================
 @dp.message()
-async def university_setup(message: types.Message):
-
-    uid = message.from_user.id
-
-    if uid in waiting_university:
-
-        data = waiting_university[uid]
-
-        if data["step"] == "name":
-
-            data["name"] = message.text
-            data["step"] = "api"
-
-            await message.answer("API URL kiriting")
-
-            return
-
-        elif data["step"] == "api":
-
-            data["api"] = message.text
-            data["step"] = "token"
-
-            await message.answer("API TOKEN kiriting")
-
-            return
-
-        elif data["step"] == "token":
-
-            uni_id = create_university(
-                data["name"],
-                data["api"],
-                message.text
-            )
-
-            add_admin(uid, uni_id)
-
-            del waiting_university[uid]
-
-            await message.answer(
-                "Universitet muvaffaqiyatli qo'shildi\n"
-                "Siz endi admin bo'ldingiz",
-                reply_markup=admin_menu
-            )
-
-            return
-
-
-# =========================
-# JSHSHIR
-# =========================
-    if message.text.startswith("/"):
-        return
+async def get_jshshir(message: types.Message):
 
     user_id = message.from_user.id
 
@@ -171,17 +76,13 @@ async def university_setup(message: types.Message):
     if student:
 
         student.telegram_id = str(user_id)
-
         db.commit()
 
         waiting_jshshir.remove(user_id)
 
         await message.answer(
-            f"""
-Hurmatli {student.name}!
-
-Siz tizimga muvaffaqiyatli ulandingiz.
-""",
+            f"Hurmatli {student.name}\n"
+            f"Siz tizimga muvaffaqiyatli ulandingiz",
             reply_markup=student_menu
         )
 
@@ -190,16 +91,115 @@ Siz tizimga muvaffaqiyatli ulandingiz.
         await message.answer("Bunday JSHSHIR topilmadi")
 
 
-# =========================
-# MAIN
-# =========================
+# ===== QARZLAR =====
+
+@dp.message(lambda message: message.text == "💰 Kontrakt qarzi")
+async def contract_debt(message: types.Message):
+
+    db = SessionLocal()
+
+    student = db.query(Student).filter_by(
+        telegram_id=str(message.from_user.id)
+    ).first()
+
+    await message.answer(
+        f"Kontrakt qarzingiz: {student.contract_debt} so'm"
+    )
+
+
+@dp.message(lambda message: message.text == "📚 Kredit qarzi")
+async def credit_debt(message: types.Message):
+
+    db = SessionLocal()
+
+    student = db.query(Student).filter_by(
+        telegram_id=str(message.from_user.id)
+    ).first()
+
+    await message.answer(
+        f"Kredit qarzingiz: {student.credit_debt}"
+    )
+
+
+@dp.message(lambda message: message.text == "📖 Kutubxona qarzi")
+async def library_debt(message: types.Message):
+
+    db = SessionLocal()
+
+    student = db.query(Student).filter_by(
+        telegram_id=str(message.from_user.id)
+    ).first()
+
+    await message.answer(
+        f"Kutubxona qarzingiz: {student.library_debt}"
+    )
+
+
+@dp.message(lambda message: message.text == "🏠 Yotoqxona qarzi")
+async def dorm_debt(message: types.Message):
+
+    db = SessionLocal()
+
+    student = db.query(Student).filter_by(
+        telegram_id=str(message.from_user.id)
+    ).first()
+
+    await message.answer(
+        f"Yotoqxona qarzingiz: {student.dorm_debt}"
+    )
+
+
+# ===== MEN HAQIMDA =====
+
+@dp.message(lambda message: message.text == "👤 Men haqimda")
+async def about_me(message: types.Message):
+
+    db = SessionLocal()
+
+    student = db.query(Student).filter_by(
+        telegram_id=str(message.from_user.id)
+    ).first()
+
+    await message.answer(
+        f"👤 Ism: {student.name}\n"
+        f"🆔 JSHSHIR: {student.jshshir}\n"
+        f"🎓 Universitet: QarDU\n"
+        f"📚 Yo'nalish: Dasturiy injiniring\n"
+        f"🏫 Kurs: 2-kurs\n"
+        f"👥 Guruh: 21-01"
+    )
+
+
+# ===== RENDER UCHUN WEB SERVER =====
+
+async def handle(request):
+    return web.Response(text="Bot ishlayapti")
+
+
+async def start_web():
+
+    port = int(os.environ.get("PORT", 10000))
+
+    app = web.Application()
+    app.router.add_get("/", handle)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+
+# ===== BOTNI ISHGA TUSHIRISH =====
+
 async def main():
 
     print("Bot ishga tushdi")
+
+    await start_web()
 
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
