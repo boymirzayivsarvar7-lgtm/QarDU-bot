@@ -4,7 +4,7 @@ ADMINS = [8088975078]
 
 DB_URL = "sqlite:///students.db"
 
-API_URL = "http://127.0.0.1:8000/students"
+API_URL = "https://jsonplaceholder.typicode.com/users"
 
 API_TOKEN = "TEST"
 
