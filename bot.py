@@ -34,11 +34,9 @@ admin_kb = ReplyKeyboardMarkup(
 )
 
 
+# START
 @dp.message(CommandStart())
 async def start(message: types.Message):
-
-    user_state.pop(message.from_user.id, None)
-
     await message.answer(
         "Assalomu alaykum!\nKim sifatida kirasiz?",
         reply_markup=start_kb
@@ -48,19 +46,13 @@ async def start(message: types.Message):
 # TALABA
 @dp.message(F.text == "🎓 Talaba")
 async def talaba(message: types.Message):
-
-    user_state.pop(message.from_user.id, None)
-
     user_state[message.from_user.id] = "jshshir"
-
     await message.answer("JSHSHIR kiriting")
 
 
 # ADMIN
 @dp.message(F.text == "👨‍💼 Admin")
 async def admin(message: types.Message):
-
-    user_state.pop(message.from_user.id, None)
 
     db = SessionLocal()
 
@@ -71,11 +63,14 @@ async def admin(message: types.Message):
     db.close()
 
     if uni:
+
         await message.answer(
             "Admin panelga xush kelibsiz",
             reply_markup=admin_kb
         )
+
     else:
+
         user_state[message.from_user.id] = "uni_name"
 
         await message.answer("Universitet nomini kiriting")
@@ -133,82 +128,24 @@ async def api_token(message: types.Message):
     db.commit()
     db.close()
 
-    await message.answer(
-        "Universitet muvaffaqiyatli qo'shildi",
-        reply_markup=admin_kb
-    )
-
     user_state.pop(message.from_user.id)
     admin_temp.pop(message.from_user.id)
 
-
-# TALABA JSHSHIR
-@dp.message()
-async def student_jshshir(message: types.Message):
-
-    if user_state.get(message.from_user.id) != "jshshir":
-        return
-
-    jshshir = message.text
-
-    db = SessionLocal()
-    uni = db.query(University).first()
-    db.close()
-
-    if not uni:
-        await message.answer("Universitet mavjud emas")
-        return
-
-    try:
-
-        headers = {
-            "Authorization": f"Bearer {uni.api_token}"
-        data = {
-            "name": "Test Talaba",
-            "faculty": "Axborot texnologiyalari",
-            "course": 3,
-            "debt": 0
-        }
-        }
-
-        # r = requests.get(
-        #     f"{uni.api_url}/{jshshir}",
-        #     headers=headers
-        # )
-
-        # if r.status_code != 200:
-        #     await message.answer("Bunday JSHSHIR topilmadi")
-        #     return
-
-        # data = r.json()
-
-        text = f"""
-        👤 FIO: {data.get("name")}
-        🎓 Fakultet: {data.get("faculty")}
-        📚 Kurs: {data.get("course")}
-        💰 Qarzdorlik: {data.get("debt")}
-        """
-
-        await message.answer(text)
-
-    except Exception as e:
-
-        print(e)
-
-        await message.answer("API ishlamayapti")
-
-    user_state.pop(message.from_user.id)
+    await message.answer(
+        "Universitet qo'shildi",
+        reply_markup=admin_kb
+    )
 
 
 # STATISTIKA
 @dp.message(F.text == "📊 Statistika")
 async def stat(message: types.Message):
-    await message.answer("Statistika hozircha yo'q")
+    await message.answer("Statistika hozircha mavjud emas")
 
 
-# XABAR YUBORISH
+# XABAR
 @dp.message(F.text == "📢 Xabar yuborish")
-async def send_msg(message: types.Message):
+async def xabar(message: types.Message):
 
     user_state[message.from_user.id] = "send"
 
@@ -222,6 +159,60 @@ async def send_all(message: types.Message):
         return
 
     await message.answer("Xabar yuborildi")
+
+    user_state.pop(message.from_user.id)
+
+
+# TALABA JSHSHIR
+@dp.message()
+async def student_jshshir(message: types.Message):
+
+    if user_state.get(message.from_user.id) != "jshshir":
+        return
+
+    jshshir = message.text
+
+    db = SessionLocal()
+
+    uni = db.query(University).first()
+
+    db.close()
+
+    if not uni:
+        await message.answer("Universitet mavjud emas")
+        return
+
+    try:
+
+        headers = {
+            "Authorization": f"Bearer {uni.api_token}"
+        }
+
+        r = requests.get(
+            f"{uni.api_url}/{jshshir}",
+            headers=headers
+        )
+
+        if r.status_code != 200:
+
+            await message.answer("Bunday JSHSHIR topilmadi")
+
+            return
+
+        data = r.json()
+
+        text = f"""
+👤 FIO: {data.get("name")}
+🎓 Fakultet: {data.get("faculty")}
+📚 Kurs: {data.get("course")}
+💰 Qarzdorlik: {data.get("debt")}
+"""
+
+        await message.answer(text)
+
+    except:
+
+        await message.answer("API ishlamayapti")
 
     user_state.pop(message.from_user.id)
 
