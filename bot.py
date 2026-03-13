@@ -128,7 +128,7 @@ async def stat(message: types.Message):
 
 
 # TALABA MA'LUMOTI (JSHSHIR)
-@dp.message(F.text)
+@dp.message()
 async def student(message: types.Message):
 
     if user_state.get(message.from_user.id) != "jshshir":
