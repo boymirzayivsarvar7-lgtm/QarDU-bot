@@ -128,13 +128,13 @@ async def stat(message: types.Message):
 
 
 # TALABA MA'LUMOTI (JSHSHIR)
-@dp.message()
+@dp.message(F.text)
 async def student(message: types.Message):
 
     if user_state.get(message.from_user.id) != "jshshir":
         return
 
-    jshshir = message.text
+    jshshir = message.text.strip()
 
     for s in students:
 
