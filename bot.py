@@ -1,8 +1,10 @@
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from students import students
 
 from config import BOT_TOKEN
 
@@ -125,7 +127,7 @@ async def stat(message: types.Message):
     await message.answer("Statistika hozircha mavjud emas")
 
 
-# JSHSHIR
+# TALABA MA'LUMOTI (JSHSHIR)
 @dp.message()
 async def student(message: types.Message):
 
@@ -134,24 +136,23 @@ async def student(message: types.Message):
 
     jshshir = message.text
 
-    # DEMO DATA
-    data = {
-        "name": "Demo Talaba",
-        "faculty": "Axborot texnologiyalari",
-        "course": 2,
-        "debt": 150000
-    }
+    for s in students:
 
-    text = f"""
-👤 FIO: {data["name"]}
-🎓 Fakultet: {data["faculty"]}
-📚 Kurs: {data["course"]}
-💰 Qarzdorlik: {data["debt"]} so'm
+        if str(s["id"]) == jshshir:
+
+            text = f"""
+👤 FIO: {s["name"]}
+🎓 Fakultet: {s["faculty"]}
+📚 Kurs: {s["course"]}
+💰 Qarzdorlik: {s["contract_debt"]} so'm
 """
 
-    await message.answer(text)
+            await message.answer(text)
 
-    user_state.pop(message.from_user.id)
+            user_state.pop(message.from_user.id)
+            return
+
+    await message.answer("Talaba topilmadi")
 
 
 async def main():
