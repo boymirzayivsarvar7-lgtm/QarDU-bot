@@ -7,3 +7,5 @@ DB_URL = "sqlite:///students.db"
 API_URL = "http://127.0.0.1:8000/students"
 
 API_TOKEN = "TEST"
+
+# update
