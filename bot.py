@@ -36,27 +36,38 @@ admin_kb = ReplyKeyboardMarkup(
 
 @dp.message(CommandStart())
 async def start(message: types.Message):
+
+    user_state.pop(message.from_user.id, None)
+
     await message.answer(
         "Assalomu alaykum!\nKim sifatida kirasiz?",
         reply_markup=start_kb
     )
 
 
-# TALABA BOSILDI
+# TALABA
 @dp.message(F.text == "🎓 Talaba")
 async def talaba(message: types.Message):
+
+    user_state.pop(message.from_user.id, None)
+
     user_state[message.from_user.id] = "jshshir"
+
     await message.answer("JSHSHIR kiriting")
 
 
-# ADMIN BOSILDI
+# ADMIN
 @dp.message(F.text == "👨‍💼 Admin")
 async def admin(message: types.Message):
 
+    user_state.pop(message.from_user.id, None)
+
     db = SessionLocal()
+
     uni = db.query(University).filter(
         University.admin_id == message.from_user.id
     ).first()
+
     db.close()
 
     if uni:
@@ -66,32 +77,44 @@ async def admin(message: types.Message):
         )
     else:
         user_state[message.from_user.id] = "uni_name"
+
         await message.answer("Universitet nomini kiriting")
 
 
 # UNIVERSITET NOMI
-@dp.message(lambda msg: user_state.get(msg.from_user.id) == "uni_name")
+@dp.message()
 async def uni_name(message: types.Message):
 
+    if user_state.get(message.from_user.id) != "uni_name":
+        return
+
     admin_temp[message.from_user.id] = {"name": message.text}
+
     user_state[message.from_user.id] = "api_url"
 
     await message.answer("API URL kiriting")
 
 
 # API URL
-@dp.message(lambda msg: user_state.get(msg.from_user.id) == "api_url")
+@dp.message()
 async def api_url(message: types.Message):
 
+    if user_state.get(message.from_user.id) != "api_url":
+        return
+
     admin_temp[message.from_user.id]["api_url"] = message.text
+
     user_state[message.from_user.id] = "api_token"
 
     await message.answer("API TOKEN kiriting")
 
 
 # API TOKEN
-@dp.message(lambda msg: user_state.get(msg.from_user.id) == "api_token")
+@dp.message()
 async def api_token(message: types.Message):
+
+    if user_state.get(message.from_user.id) != "api_token":
+        return
 
     admin_temp[message.from_user.id]["api_token"] = message.text
 
@@ -120,8 +143,11 @@ async def api_token(message: types.Message):
 
 
 # TALABA JSHSHIR
-@dp.message(lambda msg: user_state.get(msg.from_user.id) == "jshshir")
+@dp.message()
 async def student_jshshir(message: types.Message):
+
+    if user_state.get(message.from_user.id) != "jshshir":
+        return
 
     jshshir = message.text
 
@@ -159,7 +185,10 @@ async def student_jshshir(message: types.Message):
 
         await message.answer(text)
 
-    except:
+    except Exception as e:
+
+        print(e)
+
         await message.answer("API ishlamayapti")
 
     user_state.pop(message.from_user.id)
@@ -171,17 +200,20 @@ async def stat(message: types.Message):
     await message.answer("Statistika hozircha yo'q")
 
 
-# XABAR
+# XABAR YUBORISH
 @dp.message(F.text == "📢 Xabar yuborish")
-async def xabar(message: types.Message):
+async def send_msg(message: types.Message):
 
     user_state[message.from_user.id] = "send"
 
     await message.answer("Yuboriladigan xabarni kiriting")
 
 
-@dp.message(lambda msg: user_state.get(msg.from_user.id) == "send")
+@dp.message()
 async def send_all(message: types.Message):
+
+    if user_state.get(message.from_user.id) != "send":
+        return
 
     await message.answer("Xabar yuborildi")
 
