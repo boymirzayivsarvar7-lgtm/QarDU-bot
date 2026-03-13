@@ -163,25 +163,31 @@ async def student_jshshir(message: types.Message):
 
         headers = {
             "Authorization": f"Bearer {uni.api_token}"
+        data = {
+            "name": "Test Talaba",
+            "faculty": "Axborot texnologiyalari",
+            "course": 3,
+            "debt": 0
+        }
         }
 
-        r = requests.get(
-            f"{uni.api_url}/{jshshir}",
-            headers=headers
-        )
+        # r = requests.get(
+        #     f"{uni.api_url}/{jshshir}",
+        #     headers=headers
+        # )
 
-        if r.status_code != 200:
-            await message.answer("Bunday JSHSHIR topilmadi")
-            return
+        # if r.status_code != 200:
+        #     await message.answer("Bunday JSHSHIR topilmadi")
+        #     return
 
-        data = r.json()
+        # data = r.json()
 
         text = f"""
-👤 FIO: {data.get("name")}
-🎓 Fakultet: {data.get("faculty")}
-📚 Kurs: {data.get("course")}
-💰 Qarzdorlik: {data.get("debt")}
-"""
+        👤 FIO: {data.get("name")}
+        🎓 Fakultet: {data.get("faculty")}
+        📚 Kurs: {data.get("course")}
+        💰 Qarzdorlik: {data.get("debt")}
+        """
 
         await message.answer(text)
 
