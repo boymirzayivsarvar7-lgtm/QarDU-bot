@@ -128,7 +128,7 @@ async def stat(message: types.Message):
 
 
 # TALABA MA'LUMOTI (JSHSHIR)
-@dp.message()
+@dp.message(F.text)
 async def student(message: types.Message):
 
     if user_state.get(message.from_user.id) != "jshshir":
@@ -152,7 +152,7 @@ async def student(message: types.Message):
             user_state.pop(message.from_user.id)
             return
 
-    await message.answer("Talaba topilmadi")
+    await message.answer("❌ Talaba topilmadi")
 
 
 async def main():
