@@ -67,7 +67,7 @@ async def admin(message: types.Message):
 @dp.message_handler(lambda message: message.text == "📊 Statistika")
 async def stat(message: types.Message):
 
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_ID:
         return
 
     total = len(students)
