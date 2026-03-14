@@ -3,153 +3,155 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from config import BOT_TOKEN
-from students import students
-
+from config import BOT_TOKEN, ADMIN_ID
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 user_state = {}
-admin_data = {}
 
+# 10 TA TALABA
+students = [
+{"jshshir":"1001","name":"Ali Valiyev","faculty":"IT","course":2,"debt":0,"reason":"yo'q"},
+{"jshshir":"1002","name":"Vali Karimov","faculty":"IT","course":3,"debt":200000,"reason":"kontrakt"},
+{"jshshir":"1003","name":"Hasan Aliyev","faculty":"Matematika","course":1,"debt":0,"reason":"yo'q"},
+{"jshshir":"1004","name":"Bek Olimov","faculty":"Fizika","course":4,"debt":150000,"reason":"kontrakt"},
+{"jshshir":"1005","name":"Jasur Tursunov","faculty":"IT","course":2,"debt":0,"reason":"yo'q"},
+{"jshshir":"1006","name":"Nodir Ahmedov","faculty":"Kimyo","course":3,"debt":300000,"reason":"kontrakt"},
+{"jshshir":"1007","name":"Akmal Rustamov","faculty":"Biologiya","course":1,"debt":0,"reason":"yo'q"},
+{"jshshir":"1008","name":"Dilshod Xasanov","faculty":"IT","course":2,"debt":100000,"reason":"kontrakt"},
+{"jshshir":"1009","name":"Otabek Rahimov","faculty":"Tarix","course":4,"debt":0,"reason":"yo'q"},
+{"jshshir":"1010","name":"Sardor Karimov","faculty":"IT","course":3,"debt":250000,"reason":"kontrakt"}
+]
 
+# MENYU
 start_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="🎓 Talaba")],
-        [KeyboardButton(text="👨‍💼 Admin")]
-    ],
-    resize_keyboard=True
+keyboard=[
+[KeyboardButton(text="🎓 Talaba")],
+[KeyboardButton(text="👨‍💼 Admin")]
+],
+resize_keyboard=True
 )
 
 admin_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="🏫 Universitet qo'shish")],
-        [KeyboardButton(text="📊 Statistika")]
-    ],
-    resize_keyboard=True
+keyboard=[
+[KeyboardButton(text="📊 Statistika")],
+[KeyboardButton(text="📢 Qarzdorga xabar")]
+],
+resize_keyboard=True
 )
-
 
 # START
 @dp.message(CommandStart())
 async def start(message: types.Message):
 
-    user_state.pop(message.from_user.id, None)
+await message.answer(
+"Assalomu alaykum!\nKim sifatida kirasiz?",
+reply_markup=start_kb
+)
 
-    await message.answer(
-        "Assalomu alaykum!\nKim sifatida kirasiz?",
-        reply_markup=start_kb
-    )
-
-
-# TALABA TUGMASI
-@dp.message(F.text == "🎓 Talaba")
+# TALABA
+@dp.message(F.text=="🎓 Talaba")
 async def talaba(message: types.Message):
 
-    user_state[message.from_user.id] = "jshshir"
+user_state[message.from_user.id]="jshshir"
 
-    await message.answer("JSHSHIR raqamingizni kiriting")
+await message.answer("JSHSHIR kiriting")
 
-
-# ADMIN PANEL
-@dp.message(F.text == "👨‍💼 Admin")
+# ADMIN
+@dp.message(F.text=="👨‍💼 Admin")
 async def admin(message: types.Message):
 
-    await message.answer(
-        "Admin panelga xush kelibsiz",
-        reply_markup=admin_kb
-    )
+if message.from_user.id!=ADMIN_ID:
 
+await message.answer("❌ Siz admin emassiz")
 
-# UNIVERSITET QO'SHISH
-@dp.message(F.text == "🏫 Universitet qo'shish")
-async def add_uni(message: types.Message):
+return
 
-    user_state[message.from_user.id] = "uni_name"
-
-    await message.answer("Universitet nomini kiriting")
-
-
-# UNIVERSITET NOMI
-@dp.message()
-async def admin_steps(message: types.Message):
-
-    user_id = message.from_user.id
-    state = user_state.get(user_id)
-
-    # universitet nomi
-    if state == "uni_name":
-
-        admin_data[user_id] = {
-            "name": message.text
-        }
-
-        user_state[user_id] = "api_url"
-
-        await message.answer("API URL kiriting (demo uchun har qanday yozing)")
-        return
-
-
-    # api url
-    if state == "api_url":
-
-        admin_data[user_id]["api_url"] = message.text
-
-        user_state[user_id] = "api_token"
-
-        await message.answer("API TOKEN kiriting (demo uchun har qanday yozing)")
-        return
-
-
-    # api token
-    if state == "api_token":
-
-        admin_data[user_id]["api_token"] = message.text
-
-        user_state.pop(user_id)
-
-        await message.answer(
-            "Universitet muvaffaqiyatli qo'shildi",
-            reply_markup=admin_kb
-        )
-        return
-
-
-    # TALABA QIDIRISH
-    if state == "jshshir":
-
-        jshshir = message.text.strip()
-
-        for s in students:
-
-            if str(s["id"]) == jshshir:
-
-                text = f"""
-👤 FIO: {s['name']}
-🎓 Fakultet: {s['faculty']}
-📚 Kurs: {s['course']}
-💰 Qarzdorlik: {s['contract_debt']} so'm
-"""
-
-                await message.answer(text)
-
-                user_state.pop(user_id)
-                return
-
-        await message.answer("❌ Talaba topilmadi")
-
+await message.answer(
+"👨‍💼 Admin panel",
+reply_markup=admin_kb
+)
 
 # STATISTIKA
-@dp.message(F.text == "📊 Statistika")
+@dp.message(F.text=="📊 Statistika")
 async def stat(message: types.Message):
 
-    await message.answer("Statistika hozircha mavjud emas")
+if message.from_user.id!=ADMIN_ID:
+return
 
+total=len(students)
+
+debtors=len([s for s in students if s["debt"]>0])
+
+clear=len([s for s in students if s["debt"]==0])
+
+text=f"""
+📊 Statistika
+
+Talabalar soni: {total}
+
+Qarzdorlar: {debtors}
+
+Qarzsizlar: {clear}
+"""
+
+await message.answer(text)
+
+# QARZDORGA XABAR
+@dp.message(F.text=="📢 Qarzdorga xabar")
+async def send(message: types.Message):
+
+if message.from_user.id!=ADMIN_ID:
+return
+
+text="⚠️ Sizda kontrakt qarzdorligi mavjud. Iltimos to'lovni amalga oshiring."
+
+for s in students:
+
+if s["debt"]>0:
+
+await message.answer(
+f"{s['name']} ga xabar yuborildi\nQarz: {s['debt']} so'm"
+)
+
+await message.answer("📢 Barcha qarzdorlarga xabar yuborildi")
+
+# TALABA JSHSHIR
+@dp.message()
+async def student(message: types.Message):
+
+if user_state.get(message.from_user.id)!="jshshir":
+return
+
+jshshir=message.text
+
+student=next((s for s in students if s["jshshir"]==jshshir),None)
+
+if not student:
+
+await message.answer("❌ Talaba topilmadi")
+
+return
+
+text=f"""
+👤 FIO: {student['name']}
+
+🎓 Fakultet: {student['faculty']}
+
+📚 Kurs: {student['course']}
+
+💰 Qarzdorlik: {student['debt']} so'm
+
+📄 Sababi: {student['reason']}
+"""
+
+await message.answer(text)
+
+user_state.pop(message.from_user.id)
 
 async def main():
-    await dp.start_polling(bot)
+await dp.start_polling(bot)
 
-
-if __name__ == "__main__":
-    asyncio.run(main())
+if name=="main":
+asyncio.run(main())
