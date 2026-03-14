@@ -1,15 +1,17 @@
-import asyncio
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart
+import logging
+from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from config import BOT_TOKEN, ADMIN_ID
 
+logging.basicConfig(level=logging.INFO)
+
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+dp = Dispatcher(bot)
 
 user_state = {}
 
+# TEST TALABALAR
 students = [
 {"jshshir":"1001","name":"Ali Valiyev","faculty":"IT","course":2,"debt":0,"reason":"yo'q"},
 {"jshshir":"1002","name":"Vali Karimov","faculty":"IT","course":3,"debt":200000,"reason":"kontrakt"},
@@ -23,44 +25,37 @@ students = [
 {"jshshir":"1010","name":"Sardor Karimov","faculty":"IT","course":3,"debt":250000,"reason":"kontrakt"}
 ]
 
-start_kb = ReplyKeyboardMarkup(
-keyboard=[
-[KeyboardButton(text="🎓 Talaba")],
-[KeyboardButton(text="👨‍💼 Admin")]
-],
-resize_keyboard=True
-)
+# MENYU
+start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+start_kb.add(KeyboardButton("🎓 Talaba"))
+start_kb.add(KeyboardButton("👨‍💼 Admin"))
 
-admin_kb = ReplyKeyboardMarkup(
-keyboard=[
-[KeyboardButton(text="📊 Statistika")],
-[KeyboardButton(text="📢 Qarzdorga xabar")]
-],
-resize_keyboard=True
-)
+admin_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+admin_kb.add(KeyboardButton("📊 Statistika"))
+admin_kb.add(KeyboardButton("📢 Qarzdorga xabar"))
 
-@dp.message(CommandStart())
+# START
+@dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-
     await message.answer(
         "Assalomu alaykum!\nKim sifatida kirasiz?",
         reply_markup=start_kb
     )
 
-@dp.message(F.text=="🎓 Talaba")
+# TALABA
+@dp.message_handler(lambda message: message.text == "🎓 Talaba")
 async def talaba(message: types.Message):
 
-    user_state[message.from_user.id]="jshshir"
+    user_state[message.from_user.id] = "jshshir"
 
     await message.answer("JSHSHIR kiriting")
 
-@dp.message(F.text=="👨‍💼 Admin")
+# ADMIN
+@dp.message_handler(lambda message: message.text == "👨‍💼 Admin")
 async def admin(message: types.Message):
 
-    if message.from_user.id!=ADMIN_ID:
-
+    if message.from_user.id != ADMIN_ID:
         await message.answer("❌ Siz admin emassiz")
-
         return
 
     await message.answer(
@@ -68,19 +63,18 @@ async def admin(message: types.Message):
         reply_markup=admin_kb
     )
 
-@dp.message(F.text=="📊 Statistika")
+# STATISTIKA
+@dp.message_handler(lambda message: message.text == "📊 Statistika")
 async def stat(message: types.Message):
 
-    if message.from_user.id!=ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         return
 
-    total=len(students)
+    total = len(students)
+    debtors = len([s for s in students if s["debt"] > 0])
+    clear = len([s for s in students if s["debt"] == 0])
 
-    debtors=len([s for s in students if s["debt"]>0])
-
-    clear=len([s for s in students if s["debt"]==0])
-
-    text=f"""
+    text = f"""
 📊 Statistika
 
 Talabalar soni: {total}
@@ -92,39 +86,40 @@ Qarzsizlar: {clear}
 
     await message.answer(text)
 
-@dp.message(F.text=="📢 Qarzdorga xabar")
+# QARZDORGA XABAR
+@dp.message_handler(lambda message: message.text == "📢 Qarzdorga xabar")
 async def send(message: types.Message):
 
-    if message.from_user.id!=ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         return
 
     for s in students:
 
-        if s["debt"]>0:
+        if s["debt"] > 0:
 
             await message.answer(
-                f"{s['name']} ga ogohlantirish yuborildi\nQarz: {s['debt']} so'm"
+                f"{s['name']} ga xabar yuborildi\nQarz: {s['debt']} so'm"
             )
 
-    await message.answer("📢 Barcha qarzdorlarga ogohlantirish yuborildi")
+    await message.answer("📢 Barcha qarzdorlarga xabar yuborildi")
 
-@dp.message()
+# TALABA JSHSHIR
+@dp.message_handler()
 async def student(message: types.Message):
 
-    if user_state.get(message.from_user.id)!="jshshir":
+    if user_state.get(message.from_user.id) != "jshshir":
         return
 
-    jshshir=message.text
+    jshshir = message.text
 
-    student=next((s for s in students if s["jshshir"]==jshshir),None)
+    student = next((s for s in students if s["jshshir"] == jshshir), None)
 
     if not student:
 
         await message.answer("❌ Talaba topilmadi")
-
         return
 
-    text=f"""
+    text = f"""
 👤 FIO: {student['name']}
 
 🎓 Fakultet: {student['faculty']}
@@ -140,8 +135,5 @@ async def student(message: types.Message):
 
     user_state.pop(message.from_user.id)
 
-async def main():
-    await dp.start_polling(bot)
-
 if name == "main":
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)
