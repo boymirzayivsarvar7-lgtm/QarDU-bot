@@ -45,48 +45,48 @@ resize_keyboard=True
 @dp.message(CommandStart())
 async def start(message: types.Message):
 
-await message.answer(
-"Assalomu alaykum!\nKim sifatida kirasiz?",
-reply_markup=start_kb
-)
+    await message.answer(
+        "Assalomu alaykum!\nKim sifatida kirasiz?",
+        reply_markup=start_kb
+    )
 
 # TALABA
 @dp.message(F.text=="🎓 Talaba")
 async def talaba(message: types.Message):
 
-user_state[message.from_user.id]="jshshir"
+    user_state[message.from_user.id]="jshshir"
 
-await message.answer("JSHSHIR kiriting")
+    await message.answer("JSHSHIR kiriting")
 
 # ADMIN
 @dp.message(F.text=="👨‍💼 Admin")
 async def admin(message: types.Message):
 
-if message.from_user.id!=ADMIN_ID:
+    if message.from_user.id!=ADMIN_ID:
 
-await message.answer("❌ Siz admin emassiz")
+        await message.answer("❌ Siz admin emassiz")
 
-return
+        return
 
-await message.answer(
-"👨‍💼 Admin panel",
-reply_markup=admin_kb
-)
+    await message.answer(
+        "👨‍💼 Admin panel",
+        reply_markup=admin_kb
+    )
 
 # STATISTIKA
 @dp.message(F.text=="📊 Statistika")
 async def stat(message: types.Message):
 
-if message.from_user.id!=ADMIN_ID:
-return
+    if message.from_user.id!=ADMIN_ID:
+        return
 
-total=len(students)
+    total=len(students)
 
-debtors=len([s for s in students if s["debt"]>0])
+    debtors=len([s for s in students if s["debt"]>0])
 
-clear=len([s for s in students if s["debt"]==0])
+    clear=len([s for s in students if s["debt"]==0])
 
-text=f"""
+    text=f"""
 📊 Statistika
 
 Talabalar soni: {total}
@@ -96,45 +96,43 @@ Qarzdorlar: {debtors}
 Qarzsizlar: {clear}
 """
 
-await message.answer(text)
+    await message.answer(text)
 
 # QARZDORGA XABAR
 @dp.message(F.text=="📢 Qarzdorga xabar")
 async def send(message: types.Message):
 
-if message.from_user.id!=ADMIN_ID:
-return
+    if message.from_user.id!=ADMIN_ID:
+        return
 
-text="⚠️ Sizda kontrakt qarzdorligi mavjud. Iltimos to'lovni amalga oshiring."
+    for s in students:
 
-for s in students:
+        if s["debt"]>0:
 
-if s["debt"]>0:
+            await message.answer(
+                f"{s['name']} ga xabar yuborildi\nQarz: {s['debt']} so'm"
+            )
 
-await message.answer(
-f"{s['name']} ga xabar yuborildi\nQarz: {s['debt']} so'm"
-)
-
-await message.answer("📢 Barcha qarzdorlarga xabar yuborildi")
+    await message.answer("📢 Barcha qarzdorlarga xabar yuborildi")
 
 # TALABA JSHSHIR
 @dp.message()
 async def student(message: types.Message):
 
-if user_state.get(message.from_user.id)!="jshshir":
-return
+    if user_state.get(message.from_user.id)!="jshshir":
+        return
 
-jshshir=message.text
+    jshshir=message.text
 
-student=next((s for s in students if s["jshshir"]==jshshir),None)
+    student=next((s for s in students if s["jshshir"]==jshshir),None)
 
-if not student:
+    if not student:
 
-await message.answer("❌ Talaba topilmadi")
+        await message.answer("❌ Talaba topilmadi")
 
-return
+        return
 
-text=f"""
+    text=f"""
 👤 FIO: {student['name']}
 
 🎓 Fakultet: {student['faculty']}
@@ -146,12 +144,12 @@ text=f"""
 📄 Sababi: {student['reason']}
 """
 
-await message.answer(text)
+    await message.answer(text)
 
-user_state.pop(message.from_user.id)
+    user_state.pop(message.from_user.id)
 
 async def main():
-await dp.start_polling(bot)
+    await dp.start_polling(bot)
 
-if name=="main":
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
