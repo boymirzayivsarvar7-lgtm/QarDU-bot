@@ -54,7 +54,7 @@ async def talaba(message: types.Message):
 @dp.message_handler(lambda message: message.text == "👨‍💼 Admin")
 async def admin(message: types.Message):
 
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_ID:
         await message.answer("❌ Siz admin emassiz")
         return
 
