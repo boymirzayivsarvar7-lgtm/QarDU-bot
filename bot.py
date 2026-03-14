@@ -10,7 +10,6 @@ dp = Dispatcher()
 
 user_state = {}
 
-# 10 TA TALABA
 students = [
 {"jshshir":"1001","name":"Ali Valiyev","faculty":"IT","course":2,"debt":0,"reason":"yo'q"},
 {"jshshir":"1002","name":"Vali Karimov","faculty":"IT","course":3,"debt":200000,"reason":"kontrakt"},
@@ -24,7 +23,6 @@ students = [
 {"jshshir":"1010","name":"Sardor Karimov","faculty":"IT","course":3,"debt":250000,"reason":"kontrakt"}
 ]
 
-# MENYU
 start_kb = ReplyKeyboardMarkup(
 keyboard=[
 [KeyboardButton(text="🎓 Talaba")],
@@ -41,7 +39,6 @@ keyboard=[
 resize_keyboard=True
 )
 
-# START
 @dp.message(CommandStart())
 async def start(message: types.Message):
 
@@ -50,7 +47,6 @@ async def start(message: types.Message):
         reply_markup=start_kb
     )
 
-# TALABA
 @dp.message(F.text=="🎓 Talaba")
 async def talaba(message: types.Message):
 
@@ -58,7 +54,6 @@ async def talaba(message: types.Message):
 
     await message.answer("JSHSHIR kiriting")
 
-# ADMIN
 @dp.message(F.text=="👨‍💼 Admin")
 async def admin(message: types.Message):
 
@@ -73,7 +68,6 @@ async def admin(message: types.Message):
         reply_markup=admin_kb
     )
 
-# STATISTIKA
 @dp.message(F.text=="📊 Statistika")
 async def stat(message: types.Message):
 
@@ -98,7 +92,6 @@ Qarzsizlar: {clear}
 
     await message.answer(text)
 
-# QARZDORGA XABAR
 @dp.message(F.text=="📢 Qarzdorga xabar")
 async def send(message: types.Message):
 
@@ -110,12 +103,11 @@ async def send(message: types.Message):
         if s["debt"]>0:
 
             await message.answer(
-                f"{s['name']} ga xabar yuborildi\nQarz: {s['debt']} so'm"
+                f"{s['name']} ga ogohlantirish yuborildi\nQarz: {s['debt']} so'm"
             )
 
-    await message.answer("📢 Barcha qarzdorlarga xabar yuborildi")
+    await message.answer("📢 Barcha qarzdorlarga ogohlantirish yuborildi")
 
-# TALABA JSHSHIR
 @dp.message()
 async def student(message: types.Message):
 
@@ -151,5 +143,5 @@ async def student(message: types.Message):
 async def main():
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
+if name == "main":
     asyncio.run(main())
