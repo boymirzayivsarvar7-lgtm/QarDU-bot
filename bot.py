@@ -136,4 +136,5 @@ async def student(message: types.Message):
     user_state.pop(message.from_user.id)
 
 if name == "main":
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, 
+skip_updates=True)
